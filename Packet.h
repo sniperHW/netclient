@@ -48,7 +48,7 @@ public:
 
 	virtual size_t PkTotal() = 0;
 
-	virtual ByteBuffer *Buffer() {return m_buffer;}
+	ByteBuffer *Buffer() {return m_buffer;}
 
 protected:
 	int         m_type;
