@@ -24,6 +24,17 @@ public:
 		wpos = 0;
 	}
 
+	WPacket& operator = (const WPacket &o){
+		if(&o != this){
+			if(m_buffer){
+				m_buffer->DecRef();
+				m_buffer = o.m_buffer->IncRef();
+			}
+			wpos = 0;
+		}	
+		return *this;
+	} 	
+
 	Packet *Clone(){
 		return new WPacket(*this);
 	}
@@ -140,17 +151,6 @@ public:
 	}	
 
 private:
-	WPacket& operator = (const WPacket &o){
-		if(&o != this){
-			if(m_buffer){
-				m_buffer->DecRef();
-				m_buffer = o.m_buffer->IncRef();
-			}
-			wpos = 0;
-		}	
-		return *this;
-	} 
-
 	void CopyOnWrite(){
 		if(wpos == 0){
 			ByteBuffer *tmp = new ByteBuffer(*m_buffer);

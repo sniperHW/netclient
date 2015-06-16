@@ -10,6 +10,7 @@ namespace net{
 class Decoder{
 public:
 	virtual Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen) = 0;
+	virtual ~Decoder(){};
 };
 
 class PacketDecoder : public Decoder{

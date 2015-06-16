@@ -298,7 +298,7 @@ void do_cb_packet(Socket *s,Packet *rpk){
 	int oldtop = lua_gettop(L);
 	lua_rawgeti(L, LUA_REGISTRYINDEX, s->cb_packet.GetIndex());
 	lua_pushlightuserdata(L,s);
-	push_luaPacket(L,(RPacket*)rpk);
+	push_luaPacket(L,rpk);
 	if(0 != lua_pcall(L, 2, 0, 0))
 		printf("%s\n",lua_tostring(L,-1));
 	lua_settop(L, oldtop);		

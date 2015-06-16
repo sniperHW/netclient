@@ -105,6 +105,9 @@ public:
 	void SetUd(void *ud){this->ud = ud;}
 	void *GetUd(){return ud;}
 private:
+	Socket(const Socket&);
+	Socket& operator = (const Socket &o);
+	~Socket(){ if(decoder) delete decoder;} 	
 	int  rawSend();
 	void onReadAct();
 	void onWriteAct();
@@ -129,10 +132,7 @@ private:
 			delete this;		
 	}
 
-private:
-	~Socket(){ if(decoder) delete decoder;}
-	Socket(const Socket&);
-	Socket& operator = (const Socket&);       
+private:   
 	SOCKET        fd;
 	static const  int recvbuf_size = 4096;
 	static const  int maxpacket_size = 4096;

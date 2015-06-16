@@ -32,6 +32,22 @@ public:
 		else m_pkhead = {0};
 	}
 
+	CmdWPacket& operator = (const CmdWPacket &o){
+		if(&o != this){
+			if(m_buffer){
+				m_buffer->DecRef();
+				m_buffer = NULL;
+			}
+			if(o.m_buffer){
+				m_buffer = o.m_buffer->IncRef();
+				m_pkhead = o.m_pkhead;
+			}else
+				m_pkhead = {0};		
+			m_cpConstr = true;
+		}	
+		return *this;
+	} 	
+
 	Packet *Clone(){
 		return new CmdWPacket(*this);
 	}
@@ -139,22 +155,6 @@ public:
 	}	
 
 private:
-	CmdWPacket& operator = (const CmdWPacket &o){
-		if(&o != this){
-			if(m_buffer){
-				m_buffer->DecRef();
-				m_buffer = NULL;
-			}
-			if(o.m_buffer){
-				m_buffer = o.m_buffer->IncRef();
-				m_pkhead = o.m_pkhead;
-			}else
-				m_pkhead = {0};		
-			m_cpConstr = true;
-		}	
-		return *this;
-	} 
-
 	void CopyOnWrite(){
 		if(m_cpConstr){
 			assert(m_buffer);

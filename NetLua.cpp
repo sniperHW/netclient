@@ -5,6 +5,7 @@
 #include "RPacket.h"
 #include "WPacket.h"
 #include "SysTime.h"
+#include "HttpDecoder.h"
 #include <signal.h>
 
 namespace net{
@@ -100,6 +101,11 @@ int lua_CmdPacketDecoder(lua_State *L){
 	return 1;
 }
 
+int lua_HttpDecoder(lua_State *L){
+	lua_pushlightuserdata(L,new net::HttpDecoder(lua_tointeger(L,1)));
+	return 1;
+}
+
 #define REGISTER_CONST(L,N) do{\
 		lua_pushstring(L, #N);\
 		lua_pushinteger(L, N);\
@@ -127,6 +133,7 @@ bool Reg2Lua(lua_State *L){
 	REGISTER_FUNCTION("GetSysTick", &lua_GetSysTick);
 	REGISTER_FUNCTION("PacketDecoder", &lua_PacketDecoder);
 	REGISTER_FUNCTION("CmdPacketDecoder", &lua_CmdPacketDecoder);
+	REGISTER_FUNCTION("HttpDecoder", &lua_HttpDecoder);
 	lua_setglobal(L,"C");
 	return true;
 }

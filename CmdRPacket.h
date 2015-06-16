@@ -25,12 +25,30 @@ public:
 			m_pkhead = {0};
 	}
 
-	CmdRPacket(const CmdRPacket &o):Packet(RPACKET,o.m_buffer),m_pkhead(o.m_pkhead){
+	CmdRPacket(const CmdRPacket &o):Packet(RPACKET,o.m_buffer){
+		    m_pkhead                = o.m_pkhead;
 			dataremain              = *m_pkhead.m_pktDataSize;
 			rpos                    = sizeof(m_pkhead);
 	}
 
 	CmdRPacket(const CmdWPacket &o);
+
+	CmdRPacket& operator = (const CmdRPacket &o){
+		if(this != &o){
+			if(m_buffer){
+				m_buffer->DecRef();
+				m_buffer = NULL;
+			}
+			if(o.m_buffer){
+				m_buffer = o.m_buffer->IncRef();
+				rpos = o.rpos;
+				m_pkhead = o.m_pkhead;
+				dataremain = o.dataremain;
+			}else
+				m_pkhead = {0};
+		}
+		return *this;
+	}	
 
 	CmdRPacket *Clone(){
 		return new CmdRPacket(*this);
@@ -136,23 +154,6 @@ public:
 	}
 
 private:
-
-	CmdRPacket& operator = (const CmdRPacket &o){
-		if(this != &o){
-			if(m_buffer){
-				m_buffer->DecRef();
-				m_buffer = NULL;
-			}
-			if(o.m_buffer){
-				m_buffer = o.m_buffer->IncRef();
-				rpos = o.rpos;
-				m_pkhead = o.m_pkhead;
-				dataremain = o.dataremain;
-			}else
-				m_pkhead = {0};
-		}
-		return *this;
-	}
 	stPktHeader m_pkhead;
 	size_t      rpos;
 	size_t      dataremain;
