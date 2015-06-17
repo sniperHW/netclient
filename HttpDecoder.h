@@ -10,17 +10,18 @@ namespace net{
 
 class HttpDecoder : public Decoder{
 
+enum{
+	PACKET_COMPLETE = 1,
+};	
+
 struct luahttp_parser{
 	http_parser base;
 	http_parser_settings settings;
 	HttpDecoder *decoder;  	
-	uint32_t maxsize;
-	//int      parser_type;
-	int      state;	
 };
 
 public:
-	HttpDecoder(int maxsize):m_packet(NULL),m_complete(false){
+	HttpDecoder(int maxsize):m_packet(NULL),status(0),maxsize(maxsize){
 		m_parser.settings.on_message_begin = on_message_begin;
 		m_parser.settings.on_url = on_url;
 		m_parser.settings.on_status = on_status;
@@ -29,25 +30,30 @@ public:
 		m_parser.settings.on_headers_complete = on_headers_complete;
 		m_parser.settings.on_body = on_body;
 		m_parser.settings.on_message_complete = on_message_complete;
-		m_parser.maxsize = maxsize;
-		//m_parser.parser_type = parser_type;
 		m_parser.decoder = this;
+		buffer           = new char[maxsize];
 		http_parser_init((http_parser*)&m_parser,HTTP_BOTH);		
 	}
 
-	virtual ~HttpDecoder(){ if(m_packet) delete m_packet; }
+	virtual ~HttpDecoder(){ if(m_packet) delete m_packet; delete []buffer;}
 
 	Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen){
 		Packet *ret = NULL;
-		size_t  data = size-pos;
 		pklen       = 0;
-		size_t nparsed = http_parser_execute((http_parser*)&m_parser,&m_parser.settings,(char*)&buf[pos],data);		
-		if(nparsed != data){
-			pklen = -1;										
-		}else if(m_complete){
-			m_complete = false;
-			ret = m_packet;
-			m_packet = NULL;
+		if(pos + size >= (size_t)maxsize)
+			pklen = -1;
+		else{
+			memcpy(&buffer[pos],&buf[pos],size);
+			size_t nparsed = http_parser_execute((http_parser*)&m_parser,&m_parser.settings,&buffer[pos],size);
+			pos += size;		
+			if(nparsed != size){
+				pklen = -1;										
+			}else if(status == PACKET_COMPLETE){
+				status   = 0;
+				pos      = 0;
+				ret      = m_packet;
+				m_packet = NULL;
+			}
 		}
 		return ret;
 	}
@@ -90,22 +96,22 @@ private:
 
 	static int on_body(http_parser *_parser, const char *at, size_t length){
 		HttpDecoder *decoder = ((luahttp_parser*)_parser)->decoder;
-		if(length > decoder->m_parser.maxsize)
-			return -1;
 		decoder->m_packet->Append(BODY,at,length);
 		return 0;					
 	}
 
 	static int on_message_complete(http_parser *_parser){	
 		HttpDecoder *decoder = ((luahttp_parser*)_parser)->decoder;
-		decoder->m_complete = true;
+		decoder->status = PACKET_COMPLETE;
 		return 0;							
 	}	
 
 private:
 	struct luahttp_parser m_parser;
 	HttpPacket           *m_packet;
-	bool                  m_complete;
+	int                   status;
+	int                   maxsize;
+	char                 *buffer;                
 
 };
 
