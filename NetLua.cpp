@@ -66,7 +66,10 @@ int lua_Listen(lua_State *L){
 	int port       = lua_tointeger(L, 2);
 	luaRef cb(L,3);
 	net::Socket *s  = new net::Socket(AF_INET, SOCK_STREAM,IPPROTO_TCP);
-	lua_pushboolean(L,(int)s->Listen(g_reactor,ip,port,cb));
+	if(0 == s->Listen(g_reactor,ip,port,cb)){
+		lua_pushlightuserdata(L,s);
+	}else
+		lua_pushnil(L);
 	return 1;
 }
 

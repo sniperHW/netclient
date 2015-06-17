@@ -99,20 +99,25 @@ void Socket::unpack(){
 	size_t  size   = (size_t)upos - pos;
 	size_t  pklen;
 	Packet *packet;
-	while(state == establish && (packet = this->decoder->unpack(unpackbuf,pos,size,maxpacket_size,pklen))){
-		do_cb_packet(this,packet);
-		pos += pklen;
-		delete packet;
-	}
-	if(pklen < 0){
-		Close();
-		return;
-	}
-	size = upos - pos;
-	if(size < (size_t)maxpacket_size){
-		memmove(unpackbuf,&unpackbuf[pos],size);
-		upos = size;
-    }
+	
+	do{
+		packet = this->decoder->unpack(unpackbuf,pos,size,maxpacket_size,pklen);
+		if(pklen < 0){
+			Close();
+			return;
+		}else if(pklen > 0){
+			pos += pklen;
+			size = upos - pos;
+		}
+		if(packet){
+			do_cb_packet(this,packet);
+			delete packet;
+		}else
+			break;
+	}while(size && state == establish);
+
+	memmove(unpackbuf,&unpackbuf[pos],size);
+	upos = size;
 }
 
 void Socket::onReadAct()

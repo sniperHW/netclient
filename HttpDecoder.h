@@ -31,11 +31,10 @@ public:
 		m_parser.settings.on_body = on_body;
 		m_parser.settings.on_message_complete = on_message_complete;
 		m_parser.decoder = this;
-		buffer           = new char[maxsize];
 		http_parser_init((http_parser*)&m_parser,HTTP_BOTH);		
 	}
 
-	virtual ~HttpDecoder(){ if(m_packet) delete m_packet; delete []buffer;}
+	virtual ~HttpDecoder(){ if(m_packet) delete m_packet;}
 
 	Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen){
 		Packet *ret = NULL;
@@ -43,9 +42,9 @@ public:
 		if(pos + size >= (size_t)maxsize)
 			pklen = -1;
 		else{
-			memcpy(&buffer[pos],&buf[pos],size);
-			size_t nparsed = http_parser_execute((http_parser*)&m_parser,&m_parser.settings,&buffer[pos],size);
-			pos += size;		
+			size_t nparsed = http_parser_execute((http_parser*)&m_parser,&m_parser.settings,&buf[pos],size);
+			pos  += size;
+			pklen = size;		
 			if(nparsed != size){
 				pklen = -1;										
 			}else if(status == PACKET_COMPLETE){
@@ -110,8 +109,7 @@ private:
 	struct luahttp_parser m_parser;
 	HttpPacket           *m_packet;
 	int                   status;
-	int                   maxsize;
-	char                 *buffer;                
+	int                   maxsize;                
 
 };
 

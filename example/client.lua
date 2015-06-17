@@ -12,4 +12,5 @@ end)
 
 while true do
 	C.Run(50)
+	collectgarbage("collect")
 end

@@ -28,7 +28,7 @@ public:
 				pklen = -1;
 			else{
 				len += sizeof(int);
-				if(size >= (size_t)len + 4){
+				if(size >= (size_t)len){
 					ByteBuffer *b = new ByteBuffer(len);
 					b->WriteBin(0,(void*)&buf[pos],len);
 					ret   = new RPacket(b);

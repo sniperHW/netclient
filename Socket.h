@@ -151,7 +151,7 @@ private:
 	int           state;
 	size_t        wpos;
 	size_t        upos;
-	char          unpackbuf[maxpacket_size*2];
+	char          unpackbuf[maxpacket_size];
 	int           event;
 	void         *ud;	
 	std::list<Packet*>        sendlist;

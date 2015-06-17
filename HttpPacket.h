@@ -30,6 +30,8 @@ public:
 	HttpPacket():Packet(HTTPPACKET,new ByteBuffer(4096)),m_data(0){
 	}
 
+	~HttpPacket(){}
+
 	HttpPacket(const HttpPacket &o):Packet(HTTPPACKET,o.m_buffer){//,m_header(o.m_header),
 	//m_url(o.m_url),m_status(o.m_status),m_body(m_body),m_data(o.m_data){
 			m_header = o.m_header;
