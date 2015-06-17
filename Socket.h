@@ -142,8 +142,8 @@ private:
 	};
 
 	SOCKET        fd;
-	static const  int recvbuf_size = 4096;
-	static const  int maxpacket_size = 4096;
+	static const  int recvbuf_size = 65535;
+	static const  int maxpacket_size = 65535;
 	char   		  recvbuf[recvbuf_size];
 	Reactor      *reactor;
 	bool    	  writeable;

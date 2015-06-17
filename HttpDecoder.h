@@ -21,7 +21,7 @@ struct luahttp_parser{
 };
 
 public:
-	HttpDecoder(int maxsize):m_packet(NULL),status(0),maxsize(maxsize){
+	HttpDecoder(int maxsize):m_packet(NULL),status(0),maxsize(maxsize > 65535 ? 65535 : maxsize){
 		m_parser.settings.on_message_begin = on_message_begin;
 		m_parser.settings.on_url = on_url;
 		m_parser.settings.on_status = on_status;
