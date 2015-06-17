@@ -100,6 +100,14 @@ public:
 		return read<unsigned int>(pos);
 	}
 
+	char ReadInt8(size_t pos) const{
+		return read<char>(pos);
+	}
+
+	short ReadInt16(size_t pos) const{
+		return read<short>(pos);
+	}	
+
 	int ReadInt32(size_t pos) const{
 		return read<int>(pos);
 	}

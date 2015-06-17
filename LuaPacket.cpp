@@ -5,6 +5,7 @@
 #include "CmdRPacket.h"
 #include "CmdWPacket.h"
 #include "HttpPacket.h"
+#include "RawBinPacket.h"
 
 enum{
 	L_TABLE = 1,
@@ -30,6 +31,7 @@ typedef struct{
 #define LUACMDRPACKET_METATABLE "luacmdrpacket_metatable"
 #define LUACMDWPACKET_METATABLE "luacmdwpacket_metatable"
 #define LUAHTTPPACKET_METATABLE "luahttppacket_metatable"
+#define LUARAWPACKET_METATABLE  "luarawpacket_metatable"
 
 #define VAILD_KEY_TYPE(TYPE) (TYPE == LUA_TSTRING || TYPE == LUA_TNUMBER)
 #define VAILD_VAILD_TYPE(TYPE) (TYPE == LUA_TSTRING || TYPE == LUA_TNUMBER || TYPE == LUA_TTABLE || TYPE == LUA_TBOOLEAN)
@@ -264,6 +266,24 @@ static int ReadUint32(lua_State *L){
 	return 1;
 }
 
+static int ReadInt8(lua_State *L){
+	lua_packet_t p = lua_getluapacket(L,1);
+	if (!p || !p->packet) return luaL_error(L,"invaild opration");
+	net::StreamRPacket *rpk = dynamic_cast<net::StreamRPacket*>(p->packet);
+	if(!rpk) return luaL_error(L,"invaild opration");
+	lua_pushinteger(L, (lua_Integer)rpk->ReadInt8());
+	return 1;
+}
+
+static int ReadInt16(lua_State *L){
+	lua_packet_t p = lua_getluapacket(L,1);
+	if (!p || !p->packet) return luaL_error(L,"invaild opration");
+	net::StreamRPacket *rpk = dynamic_cast<net::StreamRPacket*>(p->packet);
+	if(!rpk) return luaL_error(L,"invaild opration");
+	lua_pushinteger(L, (lua_Integer)rpk->ReadInt16());
+	return 1;
+}
+
 static int ReadInt32(lua_State *L){
 	lua_packet_t p = lua_getluapacket(L,1);
 	if (!p || !p->packet) return luaL_error(L,"invaild opration");
@@ -272,6 +292,7 @@ static int ReadInt32(lua_State *L){
 	lua_pushinteger(L, (lua_Integer)rpk->ReadInt32());
 	return 1;
 }
+
 
 static int ReadDouble(lua_State *L){
 	lua_packet_t p = lua_getluapacket(L,1);
@@ -573,6 +594,47 @@ static int NewCmdRPacket(lua_State *L){
 	}
 }
 
+static int NewRawPacket(lua_State *L){
+	int argtype = lua_type(L,1);
+	if(argtype == LUA_TSTRING){
+		const char *str;
+		size_t len;
+		str = lua_tolstring(L,1,&len);
+		lua_packet_t p = (lua_packet_t)lua_newuserdata(L, sizeof(*p));
+		luaL_getmetatable(L, LUARAWPACKET_METATABLE);
+		lua_setmetatable(L, -2);
+		p->packet = new net::RawBinPacket(str,len);
+		return 1;		
+	}else if(argtype == LUA_TUSERDATA){
+		lua_packet_t o = lua_getluapacket(L,1);
+		if(!o || !o->packet || o->packet->Type() != RAWBINARY) {
+			return luaL_error(L,"invaild opration for arg1");
+		}
+		lua_packet_t p = (lua_packet_t)lua_newuserdata(L, sizeof(*p));
+		luaL_getmetatable(L, LUARAWPACKET_METATABLE);
+		lua_setmetatable(L, -2);
+		p->packet = o->packet->Clone();
+		return 1;
+	}else{
+		return luaL_error(L,"invaild opration for arg1");
+	}	
+}
+
+
+static int ReadBinary(lua_State *L){
+	lua_packet_t p = lua_getluapacket(L,1);
+	if (!p || !p->packet) return luaL_error(L,"invaild opration");
+	net::RawBinPacket *rpk = dynamic_cast<net::RawBinPacket*>(p->packet);
+	if(!rpk) return luaL_error(L,"invaild opration");
+	size_t len;
+	const char* str = (const char*)rpk->ReadBin(len);
+	if(str)
+		lua_pushlstring(L,str,len);
+	else
+		lua_pushnil(L);
+	return 1;
+}
+
 static int destroy_luapacket(lua_State *L) {
 	lua_packet_t p = lua_getluapacket(L,1);
 	if(p->packet){
@@ -693,7 +755,134 @@ static int GetHeaders(lua_State *L){
 	return 1;	
 }
 
+#define SET_FUNCTION(L,NAME,FUNC) do{\
+	lua_pushstring(L,NAME);\
+	lua_pushcfunction(L,FUNC);\
+	lua_settable(L, -3);\
+}while(0)
+
 void RegLuaPacket(lua_State *L) {
+
+    luaL_Reg packet_mt[] = {
+        {"__gc", destroy_luapacket},
+        {NULL, NULL}
+    };
+
+    luaL_Reg rpacket_methods[] = {
+        {"ReadU8",  ReadUint8},
+        {"ReadU16", ReadUint16},
+        {"ReadU32", ReadUint32},
+        {"ReadI8",  ReadInt8},
+        {"ReadI16", ReadInt16},
+        {"ReadI32", ReadInt32},        
+        {"ReadNum", ReadDouble},        
+        {"ReadStr", ReadString},
+        {"ReadTable", ReadTable},
+        {NULL, NULL}
+    };
+
+    luaL_Reg wpacket_methods[] = {                 
+        {"WriteU8", WriteUint8},
+        {"WriteU16",WriteUint16},
+        {"WriteU32",WriteUint32},
+        {"WriteNum",WriteDouble},        
+        {"WriteStr",WriteString},
+        {"WriteTable",WriteTable},
+        {"RewriteU8",RewriteUint8},
+        {"RewriteU16",RewriteUint16},
+        {"RewriteU32",RewriteUint32},
+        {"RewriteNum",RewriteDouble},
+        {"GetWritePos",GetWritePos},
+        {NULL, NULL}
+    }; 
+
+    luaL_Reg rawpacket_methods[] = {                 
+		{"ReadBinary", ReadBinary},
+        {NULL, NULL}
+    };
+
+    luaL_Reg cmdrpacket_methods[] = {
+        {"ReadU8",  ReadUint8},
+        {"ReadU16", ReadUint16},
+        {"ReadU32", ReadUint32},
+        {"ReadI8",  ReadInt8},
+        {"ReadI16", ReadInt16},
+        {"ReadI32", ReadInt32},        
+        {"ReadNum", ReadDouble},        
+        {"ReadStr", ReadString},
+        {"ReadTable", ReadTable},
+        {"ReadCmd",ReadCmd},
+        {NULL, NULL}
+    };
+
+    luaL_Reg cmdwpacket_methods[] = {                 
+        {"WriteU8", WriteUint8},
+        {"WriteU16",WriteUint16},
+        {"WriteU32",WriteUint32},
+        {"WriteNum",WriteDouble},        
+        {"WriteStr",WriteString},
+        {"WriteTable",WriteTable},
+        {"RewriteU8",RewriteUint8},
+        {"RewriteU16",RewriteUint16},
+        {"RewriteU32",RewriteUint32},
+        {"RewriteNum",RewriteDouble},
+        {"GetWritePos",GetWritePos},
+        {"WriteCmd",WriteCmd},
+        {NULL, NULL}
+    };
+
+    luaL_Reg httppacket_methods[] = {                 
+        {"GetUrl", GetUrl},
+        {"GetStatus",GetStatus},
+        {"GetBody",GetBody},
+        {"GetHeader",GetHeader},        
+        {"GetHeaders",GetHeaders},
+        {NULL, NULL}
+    };
+
+
+    luaL_newmetatable(L, LUARPACKET_METATABLE);
+    luaL_setfuncs(L, packet_mt, 0);
+
+    luaL_newlib(L, rpacket_methods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, LUAWPACKET_METATABLE);
+    luaL_setfuncs(L, packet_mt, 0);
+
+    luaL_newlib(L, wpacket_methods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, LUARAWPACKET_METATABLE);
+    luaL_setfuncs(L, packet_mt, 0);
+
+    luaL_newlib(L, rawpacket_methods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
+    luaL_newmetatable(L, LUACMDRPACKET_METATABLE);
+    luaL_setfuncs(L, packet_mt, 0);
+
+    luaL_newlib(L, cmdrpacket_methods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1); 
+
+    luaL_newmetatable(L, LUACMDWPACKET_METATABLE);
+    luaL_setfuncs(L, packet_mt, 0);
+
+    luaL_newlib(L, cmdwpacket_methods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);                       
+
+    luaL_newmetatable(L, LUAHTTPPACKET_METATABLE);
+    luaL_setfuncs(L, packet_mt, 0);
+
+    luaL_newlib(L, httppacket_methods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1); 
+/*
 	//RPacket
 	luaL_newmetatable(L, LUARPACKET_METATABLE);
 	lua_pushstring(L, "__gc");
@@ -885,8 +1074,29 @@ void RegLuaPacket(lua_State *L) {
     lua_setfield(L, -2, "__index");
     lua_pop(L, 1);
 
+
+    //rawpacket
+	luaL_newmetatable(L, LUARAWPACKET_METATABLE);
+	lua_pushstring(L, "__gc");
+	lua_pushcfunction(L, destroy_luapacket);
+	lua_rawset(L, -3);
+
+	lua_newtable(L);
+	lua_pushstring(L, "ReadBinary");
+	lua_pushcfunction(L, ReadBinary);
+	lua_rawset(L, -3);	
+
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);    
+*/
 	
-	lua_pushstring(L, "NewWPacket");
+    SET_FUNCTION(L,"NewWPacket",NewWPacket);
+    SET_FUNCTION(L,"NewRPacket",NewRPacket);
+    SET_FUNCTION(L,"NewCmdWPacket",NewCmdWPacket);
+    SET_FUNCTION(L,"NewCmdRPacket",NewCmdRPacket);
+    SET_FUNCTION(L,"NewRawPacket",NewRawPacket);
+
+	/*lua_pushstring(L, "NewWPacket");
 	lua_pushcfunction(L, NewWPacket);
 	lua_rawset(L, -3);
 	lua_pushstring(L, "NewRPacket");
@@ -898,6 +1108,9 @@ void RegLuaPacket(lua_State *L) {
 	lua_rawset(L, -3);
 	lua_pushstring(L, "NewCmdRPacket");
 	lua_pushcfunction(L, NewCmdRPacket);
-	lua_rawset(L, -3);	
+	lua_rawset(L, -3);
+	lua_pushstring(L, "NewRawPacket");
+	lua_pushcfunction(L, NewRawPacket);
+	lua_rawset(L, -3);*/		
 
 }

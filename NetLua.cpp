@@ -73,7 +73,12 @@ int lua_Listen(lua_State *L){
 int lua_SendWPacket(lua_State *L){
 	net::Socket *s    = (net::Socket*)lua_touserdata(L,1);
 	net::Packet *wpk = toLuaPacket(L, 2);
-	s->Send(wpk);
+	if(lua_gettop(L) == 3){
+		luaRef cb(L,3); 
+		s->Send(wpk,&cb);
+	}else{
+		s->Send(wpk,NULL);
+	}
 	return 0;
 }
 

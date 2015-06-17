@@ -94,7 +94,7 @@ public:
 	Socket(int family,int type,int protocol);
 	Socket(SOCKET fd);
 	bool SetNonBlock();
-	int  Send(Packet*);
+	int  Send(Packet*,luaRef*);
 	bool Bind(Reactor *reactor,Decoder *,luaRef&,luaRef&);
 	void Close();
 	int  Event(){return event;}
@@ -132,7 +132,15 @@ private:
 			delete this;		
 	}
 
-private:   
+private:
+
+	struct stSendFinish{
+		luaRef         cb;
+		Packet        *packet;
+		stSendFinish(Packet *p,luaRef &r):cb(r),packet(p)
+		{}		
+	};
+
 	SOCKET        fd;
 	static const  int recvbuf_size = 4096;
 	static const  int maxpacket_size = 4096;
@@ -146,7 +154,8 @@ private:
 	char          unpackbuf[maxpacket_size*2];
 	int           event;
 	void         *ud;	
-	std::list<Packet*> sendlist;
+	std::list<Packet*>        sendlist;
+	std::list<stSendFinish>   finishcb_list;
 	luaRef        cb_connect;
 	luaRef        cb_new_client;
 	luaRef        cb_disconnected;

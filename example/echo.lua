@@ -7,7 +7,10 @@ C.Listen("127.0.0.1",8010,function (s)
 		for k,v in pairs(rpk:GetHeaders()) do
 			print(k,v)
 		end
-		C.Close(s)
+		
+		local wpk = C.NewRawPacket("hello world")	
+		C.Send(s,wpk,function () C.Close(s) end)
+		--C.Close(s)
 		--print("recv packet",rpk:ReadStr(),recvcount)
 		--recvcount = recvcount + 1;
 		--C.Send(s,C.NewWPacket(rpk))

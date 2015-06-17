@@ -65,7 +65,13 @@ public:
 
 	virtual unsigned int ReadUint32() = 0;
 
+	virtual unsigned short PeekUint16() = 0;
+
 	virtual unsigned int PeekUint32() = 0;
+	
+	virtual char ReadInt8() = 0;
+
+	virtual short ReadInt16() = 0;
 
 	virtual int ReadInt32() = 0;
 

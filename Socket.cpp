@@ -186,6 +186,24 @@ int  Socket::rawSend(){
 				sendlist.pop_front();
 				delete wpk;
 				wpos = 0;
+
+				if(!finishcb_list.empty()){
+					stSendFinish stCb = finishcb_list.front();
+					if(stCb.packet == wpk){
+						finishcb_list.pop_front();
+						lua_State *L = stCb.cb.GetLState();
+						int oldtop = lua_gettop(L);
+						lua_rawgeti(L, LUA_REGISTRYINDEX, stCb.cb.GetIndex());
+						if(0 != lua_pcall(L, 0, 0, 0))
+							printf("%s\n",lua_tostring(L,-1));
+						lua_settop(L, oldtop);
+
+						if(state == closeing)
+							return 0;
+					}
+				}
+
+
 			}else{
 				wpos += len;		
 			}
@@ -228,9 +246,14 @@ void  Socket::Close()
 	}
 }
 
-int  Socket::Send(Packet *wpk){
+int  Socket::Send(Packet *wpk,luaRef *cb){
 	if(state != establish) return -1;
-	sendlist.push_back(wpk->Clone());
+	wpk = wpk->Clone();
+	sendlist.push_back(wpk);
+	if(cb){
+		stSendFinish stCb(wpk,*cb);
+		finishcb_list.push_back(stCb);
+	}
 	return rawSend();
 }
 

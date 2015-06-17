@@ -98,11 +98,33 @@ public:
 		return ret;
 	}
 
+	unsigned short PeekUint16(){
+		if(dataremain < sizeof(unsigned short)) return 0;
+		unsigned int ret = m_buffer->ReadUint16(rpos);
+		return ret;		
+	}	
+
 	unsigned int PeekUint32(){
 		if(dataremain < sizeof(unsigned int)) return 0;
 		unsigned int ret = m_buffer->ReadUint32(rpos);
 		return ret;		
 	}
+
+	char ReadInt8(){
+		if (dataremain < sizeof(char)) return 0;
+		char ret = m_buffer->ReadInt8(rpos);
+		rpos += sizeof(ret);
+		dataremain -= sizeof(ret);
+		return ret;
+	}
+
+	short ReadInt16(){
+		if (dataremain < sizeof(short)) return 0;
+		short ret = m_buffer->ReadInt16(rpos);
+		rpos += sizeof(ret);
+		dataremain -= sizeof(ret);
+		return ret;
+	}	
 
 	int ReadInt32(){
 		if (dataremain < sizeof(unsigned int)) return 0;
