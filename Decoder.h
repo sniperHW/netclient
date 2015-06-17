@@ -9,8 +9,12 @@ namespace net{
 
 class Decoder{
 public:
+	Decoder(){}
 	virtual Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen) = 0;
 	virtual ~Decoder(){};
+private:
+	Decoder(const Decoder&);
+	Decoder& operator = (const Decoder &o);
 };
 
 class PacketDecoder : public Decoder{

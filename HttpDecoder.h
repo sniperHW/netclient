@@ -90,6 +90,8 @@ private:
 
 	static int on_body(http_parser *_parser, const char *at, size_t length){
 		HttpDecoder *decoder = ((luahttp_parser*)_parser)->decoder;
+		if(length > decoder->m_parser.maxsize)
+			return -1;
 		decoder->m_packet->Append(BODY,at,length);
 		return 0;					
 	}
