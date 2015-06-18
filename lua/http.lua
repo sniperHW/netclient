@@ -22,10 +22,6 @@ function http_response:buildResponse()
 	return strResponse
 end
 
-function http_response:Send(connection)
-	return connection:Send(C.NewRawPacket(self:buildResponse()))	
-end
-
 function http_response:WriteHead(status,phase,heads)
 	self.status = status
 	self.phase = phase
@@ -39,6 +35,7 @@ end
 
 function http_response:End(body)
 	self.body = body
+	self.connection:Send(C.NewRawPacket(self:buildResponse()))
 end
 
 
@@ -80,10 +77,8 @@ function http_server:CreateServer(ip,port,on_request)
 		local connection = socket.New(s)
 		C.Bind(s,C.HttpDecoder(65535),function (_,rpk)
 			local response = http_response:new()
+			response.connection = connection
 			on_request(rpk,response)
-			if connection then
-				response:Send(connection)
-			end
 		end,
 		function (_)
 			connection = nil
