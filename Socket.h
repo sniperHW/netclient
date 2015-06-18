@@ -104,17 +104,6 @@ public:
 	SOCKET Fd(){return fd;}
 	void SetUd(void *ud){this->ud = ud;}
 	void *GetUd(){return ud;}
-private:
-	Socket(const Socket&);
-	Socket& operator = (const Socket &o);
-	~Socket(){ if(decoder) delete decoder;} 	
-	int  rawSend();
-	void onReadAct();
-	void onWriteAct();
-	void doAccept();
-	void doConnect();
-	void unpack();
-
 	void IncRef(){
 #ifdef _WIN		
 		InterlockedIncrement(&refCount);
@@ -131,6 +120,17 @@ private:
 #endif
 			delete this;		
 	}
+
+private:
+	Socket(const Socket&);
+	Socket& operator = (const Socket &o);
+	~Socket(){ if(decoder) delete decoder;} 	
+	int  rawSend();
+	void onReadAct();
+	void onWriteAct();
+	void doAccept();
+	void doConnect();
+	void unpack();
 
 private:
 

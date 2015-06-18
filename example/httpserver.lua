@@ -1,4 +1,4 @@
-local Http = require("http/http")
+local Http = require("lua.http")
 
 Http.HttpServer("127.0.0.1",8010,function(req,res)
 	for k,v in pairs(req:GetHeaders()) do

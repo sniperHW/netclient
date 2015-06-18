@@ -39,13 +39,19 @@ bool  Socket::Listen(Reactor *reactor,const char *ip,int port,luaRef &cb)
 	return true;
 }
 
-bool Socket::Connect(Reactor *reactor,const char *ip,int port,luaRef &cb)
+bool Socket::Connect(Reactor *reactor,const char *host,int port,luaRef &cb)
 {
-	if(!reactor || !ip || !cb.GetLState()) return false;
+	if(!reactor || !host || !cb.GetLState()) return false;
+	
 	struct sockaddr_in remote;	
 	remote.sin_family = AF_INET;
 	remote.sin_port = htons(port);
-	remote.sin_addr.s_addr = inet_addr(ip);
+
+	hostent *phostent = gethostbyname(host);
+	if(phostent)
+		remote.sin_addr.s_addr = *((unsigned long*)phostent->h_addr_list[0]); 
+	else
+		remote.sin_addr.s_addr = inet_addr(host);
 	if(!SetNonBlock()){ 
 		printf("Connect SetNonBlock error\n");
 		return false;

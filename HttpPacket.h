@@ -32,13 +32,13 @@ public:
 
 	~HttpPacket(){}
 
-	HttpPacket(const HttpPacket &o):Packet(HTTPPACKET,o.m_buffer){//,m_header(o.m_header),
-	//m_url(o.m_url),m_status(o.m_status),m_body(m_body),m_data(o.m_data){
+	HttpPacket(const HttpPacket &o):Packet(HTTPPACKET,o.m_buffer){
 			m_header = o.m_header;
 			m_status = o.m_status;
 			m_data   = o.m_data;
 			m_url    = o.m_url;
 			m_header = o.m_header;
+			m_body   = o.m_body;
 	}
 
 	HttpPacket& operator = (const HttpPacket &o){
@@ -96,7 +96,7 @@ public:
 			m_buffer->WriteBin(m_data,(void*)str,len);
 			m_body.size = len;
 			m_data += len;
-			printf("body %d\n",len);			
+			//printf("body %d\n",len);			
 		}else if(type == HEADER_FIELD || type == HEADER_VALUE){
 			Val tmp;
 			tmp.type = type;

@@ -76,13 +76,15 @@ int lua_Listen(lua_State *L){
 int lua_SendWPacket(lua_State *L){
 	net::Socket *s    = (net::Socket*)lua_touserdata(L,1);
 	net::Packet *wpk = toLuaPacket(L, 2);
+	int  ret; 
 	if(lua_gettop(L) == 3){
 		luaRef cb(L,3); 
-		s->Send(wpk,&cb);
+		ret = s->Send(wpk,&cb);
 	}else{
-		s->Send(wpk,NULL);
+		ret = s->Send(wpk,NULL);
 	}
-	return 0;
+	lua_pushboolean(L,ret == 0 ? 1:0);
+	return 1;
 }
 
 int lua_GetSysTick(lua_State *L){
@@ -114,6 +116,18 @@ int lua_HttpDecoder(lua_State *L){
 	return 1;
 }
 
+int lua_Socket_Retain(lua_State *L){
+	net::Socket *s = (net::Socket*)lua_touserdata(L,1);
+	s->IncRef();
+	return 0;
+}
+
+int lua_Socket_Release(lua_State *L){
+	net::Socket *s = (net::Socket*)lua_touserdata(L,1);
+	s->DecRef();
+	return 0;
+}
+
 #define REGISTER_CONST(L,N) do{\
 		lua_pushstring(L, #N);\
 		lua_pushinteger(L, N);\
@@ -132,6 +146,8 @@ bool Reg2Lua(lua_State *L){
 
 	lua_newtable(L);
 	RegLuaPacket(L);
+	REGISTER_FUNCTION("SocketRetain", &lua_Socket_Retain);
+	REGISTER_FUNCTION("SocketRelease", &lua_Socket_Release);
 	REGISTER_FUNCTION("Connect", &lua_Connect);
 	REGISTER_FUNCTION("Listen", &lua_Listen);
 	REGISTER_FUNCTION("Close", &lua_Close);
