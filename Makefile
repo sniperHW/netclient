@@ -1,6 +1,6 @@
 CFLAGS   = -g -fno-strict-aliasing -Wall -std=c++0x
 LDFLAGS  = -llua 
-INCLUDE  = -I./ -I./http-parser
+INCLUDE  = -I./ -I./deps
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 ifeq ($(uname_S),Linux)
@@ -31,5 +31,8 @@ Socket.cpp
 
 all:$(source)
 	g++ $(SHARED) $(CFLAGS) -c $(source) $(DEFINE) $(INCLUDE)
-	g++ $(SHARED) $(CFLAGS) -o LuaNet *.o $(LDFLAGS) ./http-parser/libhttp_parser.a
+	g++ $(SHARED) $(CFLAGS) -o LuaNet *.o $(LDFLAGS) ./deps/http-parser/libhttp_parser.a 
 	rm *.o
+
+testmysql:example/testmysql.c
+	gcc -g -o testmysql example/testmysql.c ./deps/mysql/lib/libmysql.lib  -I./deps 

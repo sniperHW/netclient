@@ -78,7 +78,9 @@ function http_server:CreateServer(ip,port,on_request)
 		C.Bind(s,C.HttpDecoder(65535),function (_,rpk)
 			local response = http_response:new()
 			response.connection = connection
-			on_request(rpk,response)
+			if not on_request(rpk,response) then
+				connection:Close()
+			end
 		end,
 		function (_)
 			connection = nil

@@ -739,6 +739,14 @@ static int GetHeader(lua_State *L){
 	return 1;				
 }
 
+#include "http-parser/http_parser.h"
+
+const char *http_method_name[] = 
+  {
+#define XX(num, name, string) #string,
+  HTTP_METHOD_MAP(XX)
+#undef XX
+  };
 
 static int GetHeaders(lua_State *L){
 	lua_packet_t p = lua_getluapacket(L,1);
@@ -753,6 +761,19 @@ static int GetHeaders(lua_State *L){
 		lua_rawset(L, -3);
 	}
 	return 1;	
+}
+
+static int GetMethod(lua_State *L){
+	lua_packet_t p = lua_getluapacket(L,1);
+	if (!p || !p->packet) return luaL_error(L,"invaild opration");
+	net::HttpPacket *rpk = dynamic_cast<net::HttpPacket*>(p->packet);
+	int method = rpk->GetMethod();
+	if(method < 0)
+		lua_pushnil(L);
+	else{
+		lua_pushstring(L,http_method_name[method]);
+	}	
+	return 1;
 }
 
 #define SET_FUNCTION(L,NAME,FUNC) do{\
@@ -837,6 +858,7 @@ void RegLuaPacket(lua_State *L) {
         {"GetBody",GetBody},
         {"GetHeader",GetHeader},        
         {"GetHeaders",GetHeaders},
+        {"GetMethod",GetMethod},
         {NULL, NULL}
     };
 

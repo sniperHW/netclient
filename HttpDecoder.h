@@ -40,8 +40,8 @@ public:
 		Packet *ret = NULL;
 		pklen       = 0;
 		err         = 0;
-		buf[size] = 0;
-		printf("----------------------------------------\n%s",buf);		
+		//buf[size] = 0;
+		//printf("----------------------------------------\n%s",buf);		
 		if(pos + size >= (size_t)maxsize)
 			pklen = -1;
 		else{
@@ -94,7 +94,9 @@ private:
 		return 0;			
 	}
 
-	static int on_headers_complete(http_parser *_parser){	
+	static int on_headers_complete(http_parser *_parser){
+		HttpDecoder *decoder = ((luahttp_parser*)_parser)->decoder;
+		decoder->m_packet->SetMethod(_parser->method);
 		return 0;		
 	}
 

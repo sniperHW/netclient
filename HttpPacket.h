@@ -27,7 +27,7 @@ private:
 	};
 
 public:
-	HttpPacket():Packet(HTTPPACKET,new ByteBuffer(4096)),m_data(0){
+	HttpPacket():Packet(HTTPPACKET,new ByteBuffer(4096)),m_data(0),m_method(-1){
 	}
 
 	~HttpPacket(){}
@@ -39,6 +39,7 @@ public:
 			m_url    = o.m_url;
 			m_header = o.m_header;
 			m_body   = o.m_body;
+			m_method = o.m_method;
 	}
 
 	HttpPacket& operator = (const HttpPacket &o){
@@ -50,7 +51,8 @@ public:
 				m_status = o.m_status;
 				m_data   = o.m_data;
 				m_url    = o.m_url;
-				m_body = o.m_body;
+				m_body   = o.m_body;
+				m_method = o.m_method;
 			}
 		}	
 		return *this;
@@ -74,6 +76,14 @@ public:
 
 	size_t PkTotal(){
 		return PkLen();
+	}
+
+	void SetMethod(int method){
+		m_method = method;
+	}
+
+	int  GetMethod(){
+		return m_method;
 	}
 
 	void Append(int type,const char *str,size_t len){
@@ -155,6 +165,7 @@ private:
 	Val              m_status;
 	Val              m_body;
 	size_t           m_data;
+	int              m_method;
 };
 
 }
