@@ -25,9 +25,9 @@ local function parse(req)
 	elseif method == "GET" then
 		local param = {}
 		if tmp1[2] then
-			tmp1 = SplitString(tmp1[2],"&")
+			tmp1 = Util.SplitString(tmp1[2],"&")
 			for k,v in pairs(tmp1) do
-				local tmp2 = SplitString(v,"=")
+				local tmp2 = Util.SplitString(v,"=")
 				if #tmp2 == 2 then
 					param[tmp2[1]] = tmp2[2]
 				end
