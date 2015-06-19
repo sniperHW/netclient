@@ -52,7 +52,8 @@ void Reactor::LoopOnce(unsigned int ms){
 #ifdef WIN32
 	if((n= TEMP_FAILURE_RETRY(::select(0,&r_set,&w_set,&e_set, &timeout))) > 0)
 #else
-	if((n= TEMP_FAILURE_RETRY(::select(maxfd+1,&r_set,&w_set,&e_set, &timeout))) > 0)
+	int fd_setsize = (maxfd + 1) < FD_SETSIZE ? (maxfd + 1) : FD_SETSIZE;
+	if((n= TEMP_FAILURE_RETRY(::select(fd_setsize,&r_set,&w_set,&e_set, &timeout))) > 0)
 #endif
 	{
 		size_t size = sockets.Size();
