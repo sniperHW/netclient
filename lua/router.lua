@@ -6,9 +6,14 @@ local function parse(req)
 	local method = req:GetMethod()
 	local urlstr = req:GetUrl()
 	local url
-	for w in string.gmatch(urlstr, "/%a+") do
-		url = w
-	end
+	local idx1 = string.find(urlstr,"/",1)
+	if not idx1 then
+		url = "/"
+	else
+		local idx2 = string.find(urlstr,"?",idx1)
+		if idx2 then idx2 = idx2 - 1 end
+		url = string.sub(s,idx1,idx2)
+	end	
 	if method == "POST" then
 		return url,req:GetBody()
 	elseif method == "GET" then
