@@ -48,6 +48,8 @@ public:
 			if(nparsed != size){
 				pklen = -1;										
 			}else if(status == PACKET_COMPLETE){
+				buf[size] = 0;
+				printf("----------------------------------------\n%s",buf);
 				status   = 0;
 				pos      = 0;
 				ret      = m_packet;
@@ -60,7 +62,7 @@ public:
 private:
 	static int on_message_begin (http_parser *_parser){
 		HttpDecoder *decoder = ((luahttp_parser*)_parser)->decoder;
-		if(decoder->m_packet) delete decoder->m_packet;
+		if(decoder->m_packet) return -1;
 		decoder->m_packet = new HttpPacket;
 		return 0;
 	}

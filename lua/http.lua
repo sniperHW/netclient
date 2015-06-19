@@ -15,10 +15,8 @@ function http_response:buildResponse()
 		strResponse = strResponse .. string.format("%s\r\n",v)
 	end	
 	if self.body then
-		strResponse = strResponse .. string.format("Content-Type: %s \r\n",self.body)
 		strResponse = strResponse .. string.format("Content-Length: %d \r\n\r\n %s",#self.body+1,self.body)
 	end
-	strResponse = strResponse .. "\r\n\r\n"
 	return strResponse
 end
 
@@ -117,13 +115,15 @@ function httpclient:buildRequest(request)
 	if request.body then
 		strRequest = strRequest .. string.format("Content-Length: %d \r\n\r\n %s",#request.body+1,request.body)
 	end
-	strRequest = strRequest .. "\r\n"
 	return strRequest
 end
 
-function httpclient:Post(request,on_result)
+
+function httpclient:request(method,request,on_result)
+	print(self.host,self.port)
 	if C.Connect(self.host,self.port,function (s,success)
-			if success then 
+			if success then
+				print("connect success") 
 				local connection = socket.New(s)
 				C.Bind(s,C.HttpDecoder(65535),function (_,rpk)
 					on_result(rpk)
@@ -134,7 +134,7 @@ function httpclient:Post(request,on_result)
 				function (_)
 					connection = nil
 				end)
-				request.method = "POST"
+				request.method = method
 				connection:Send(C.NewRawPacket(self:buildRequest(request)))
 			else
 				on_result(nil)
@@ -144,7 +144,15 @@ function httpclient:Post(request,on_result)
 		return true
 	else
 		return false
-	end
+	end	
+end
+
+function httpclient:Post(request,on_result)
+	return self:request("POST",request,on_result)
+end
+
+function httpclient:Get(request,on_result)
+	return self:request("Get",request,on_result)
 end
 
 local function HttpClient(host,port)

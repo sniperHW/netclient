@@ -50,7 +50,7 @@ public:
 				m_status = o.m_status;
 				m_data   = o.m_data;
 				m_url    = o.m_url;
-				m_header = o.m_header;
+				m_body = o.m_body;
 			}
 		}	
 		return *this;
