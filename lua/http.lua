@@ -115,7 +115,6 @@ function httpclient:buildRequest(request)
 		strRequest = strRequest .. string.format("%s\r\n",v)
 	end	
 	if request.body then
-		strRequest = strRequest .. string.format("Content-Type: %s \r\n",self.body)
 		strRequest = strRequest .. string.format("Content-Length: %d \r\n\r\n %s",#request.body,request.body)
 	end
 	strRequest = strRequest .. "\r\n"
