@@ -36,24 +36,27 @@ public:
 
 	virtual ~HttpDecoder(){ if(m_packet) delete m_packet;}
 
-	Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen){
+	Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen,int &err){
 		Packet *ret = NULL;
 		pklen       = 0;
+		err         = 0;
+		buf[size] = 0;
+		printf("----------------------------------------\n%s",buf);		
 		if(pos + size >= (size_t)maxsize)
 			pklen = -1;
 		else{
 			size_t nparsed = http_parser_execute((http_parser*)&m_parser,&m_parser.settings,&buf[pos],size);
-			pos  += size;
-			pklen = size;		
+			pos  += size;		
 			if(nparsed != size){
-				pklen = -1;										
+				err = -1;										
 			}else if(status == PACKET_COMPLETE){
+				pklen     = size;
 				buf[size] = 0;
 				printf("----------------------------------------\n%s",buf);
-				status   = 0;
-				pos      = 0;
-				ret      = m_packet;
-				m_packet = NULL;
+				status    = 0;
+				pos       = 0;
+				ret       = m_packet;
+				m_packet  = NULL;
 			}
 		}
 		return ret;

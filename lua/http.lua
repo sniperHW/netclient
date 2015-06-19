@@ -15,7 +15,9 @@ function http_response:buildResponse()
 		strResponse = strResponse .. string.format("%s\r\n",v)
 	end	
 	if self.body then
-		strResponse = strResponse .. string.format("Content-Length: %d \r\n\r\n %s",#self.body+1,self.body)
+		strResponse = strResponse .. string.format("Content-Length: %d \r\n\r\n%s",#self.body,self.body)
+	else
+		strResponse = strResponse .. "\r\n\r\n"
 	end
 	return strResponse
 end
@@ -106,14 +108,15 @@ function httpclient:new(host,port)
 end
 
 function httpclient:buildRequest(request)
-	local strRequest = string.format("%s %s HTTP/1.0\r\n",request.method,request.path)
+	local strRequest = string.format("%s %s HTTP/1.1\r\n",request.method,request.path)
 	strRequest = strRequest .. string.format("Host: %s \r\n",self.host)
-	strRequest = strRequest .. "User-Agent: Incutio HttpClient v0.9 \r\n"
 	for k,v in pairs(request.headers) do
 		strRequest = strRequest .. string.format("%s\r\n",v)
 	end	
 	if request.body then
-		strRequest = strRequest .. string.format("Content-Length: %d \r\n\r\n %s",#request.body+1,request.body)
+		strRequest = strRequest .. string.format("Content-Length: %d \r\n\r\n%s",#request.body,request.body)
+	else
+		strRequest = strRequest .. "\r\n"
 	end
 	return strRequest
 end
@@ -152,7 +155,7 @@ function httpclient:Post(request,on_result)
 end
 
 function httpclient:Get(request,on_result)
-	return self:request("Get",request,on_result)
+	return self:request("GET",request,on_result)
 end
 
 local function HttpClient(host,port)

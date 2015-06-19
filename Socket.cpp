@@ -105,13 +105,15 @@ void Socket::unpack(){
 	size_t  size   = (size_t)upos - pos;
 	size_t  pklen;
 	Packet *packet;
-	
+	int     err;
 	do{
-		packet = this->decoder->unpack(unpackbuf,pos,size,maxpacket_size,pklen);
-		if(pklen < 0){
+		packet = this->decoder->unpack(unpackbuf,pos,size,maxpacket_size,pklen,err);
+		if(err){
 			Close();
 			return;
-		}else if(pklen > 0){
+		}
+
+		if(pklen > 0){
 			pos += pklen;
 			size = upos - pos;
 		}
