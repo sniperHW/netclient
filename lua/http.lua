@@ -16,7 +16,7 @@ function http_response:buildResponse()
 	end	
 	if self.body then
 		strResponse = strResponse .. string.format("Content-Type: %s \r\n",self.body)
-		strResponse = strResponse .. string.format("Content-Length: %d \r\n\r\n %s",#self.body,self.body)
+		strResponse = strResponse .. string.format("Content-Length: %d \r\n\r\n %s",#self.body+1,self.body)
 	end
 	strResponse = strResponse .. "\r\n\r\n"
 	return strResponse
@@ -115,7 +115,7 @@ function httpclient:buildRequest(request)
 		strRequest = strRequest .. string.format("%s\r\n",v)
 	end	
 	if request.body then
-		strRequest = strRequest .. string.format("Content-Length: %d \r\n\r\n %s",#request.body,request.body)
+		strRequest = strRequest .. string.format("Content-Length: %d \r\n\r\n %s",#request.body+1,request.body)
 	end
 	strRequest = strRequest .. "\r\n"
 	return strRequest
