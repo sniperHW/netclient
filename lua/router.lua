@@ -6,6 +6,7 @@ local function parse(req)
 	local method = req:GetMethod()
 	local urlstr = req:GetUrl()
 	local url
+	
 	local idx1 = string.find(urlstr,"/",1)
 	if not idx1 then
 		url = "/"
@@ -14,6 +15,7 @@ local function parse(req)
 		if idx2 then idx2 = idx2 - 1 end
 		url = string.sub(s,idx1,idx2)
 	end	
+
 	if method == "POST" then
 		return url,req:GetBody()
 	elseif method == "GET" then
@@ -33,12 +35,12 @@ function router.Dispatch(req,res)
 	if url then
 		local handler = router.handler[url]
 		if handler then
-			return not handler(req,res,param)
+			return handler(req,res,param)
 		else
-			return false
+			return "error"
 		end
 	else
-		return false
+		return "error"
 	end
 end
 

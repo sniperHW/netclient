@@ -4,7 +4,6 @@ function socket:new(s)
   local o = {}
   o.__index = socket
   o.__gc    = function (self)
-  		print("gc")
   		self:Close()
   		C.SocketRelease(self.s)
   end      
