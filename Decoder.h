@@ -3,7 +3,6 @@
 
 #include "Packet.h"
 #include "RPacket.h"
-#include "CmdRPacket.h"
 
 namespace net{
 
@@ -38,37 +37,6 @@ public:
 				}
 			}
 		}			
-		return ret;
-	}
-};
-
-
-class CmdPacketDecoder : public Decoder{
-public:
-	Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen,int &err){
-		Packet *ret = NULL;	
-		stPktHeader header;
-		pklen = 0;
-		err   = 0;
-		if(size >= sizeof(header)){
-			//header  = (stPktHeader*)&unpackbuf[pos];
-			//header.m_pktFlag		= &unpackbuf[0];
-			header.m_pktDataSize	= (unsigned short*)&buf[1];
-			//header.m_pktSeq		= (unsigned short*)&unpackbuf[3];
-			//header.m_pktCmdId		= (unsigned short*)&unpackbuf[5];
-			//header.m_isStructType	= (byte*)&unpackbuf[7];
-			//header.m_timestamp	= (time_t *)&unpackbuf[8];
-			size_t len = (size_t)*header.m_pktDataSize + sizeof(header);
-			if(len <= 0 || len > (int)max)
-				err = -1;
-			else if(size >= len + sizeof(header)){
-				ByteBuffer *b = new ByteBuffer(len);
-				b->WriteBin(0,(void*)&buf[pos],len);
-				ret   = new CmdRPacket(b);
-				pklen = len;
-				b->DecRef();
-			}
-		}
 		return ret;
 	}
 };

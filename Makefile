@@ -25,7 +25,6 @@ LuaPacket.cpp\
 NetLua.cpp\
 Reactor.cpp\
 RPacket.cpp\
-CmdRPacket.cpp\
 Socket.cpp
 
 
