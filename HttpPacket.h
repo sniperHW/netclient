@@ -102,9 +102,10 @@ public:
 			m_data += 1;
 			m_status.size = len;		
 		}else if(type == BODY){
-			m_body.idx = m_data;
+			if(!m_body.idx)
+				m_body.idx = m_data;
 			m_buffer->WriteBin(m_data,(void*)str,len);
-			m_body.size = len;
+			m_body.size += len;
 			m_data += len;
 			//printf("body %d\n",len);			
 		}else if(type == HEADER_FIELD || type == HEADER_VALUE){
