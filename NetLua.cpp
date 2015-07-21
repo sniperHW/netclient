@@ -106,11 +106,6 @@ int lua_PacketDecoder(lua_State *L){
 	return 1;
 }
 
-int lua_CmdPacketDecoder(lua_State *L){
-	lua_pushlightuserdata(L,new net::CmdPacketDecoder);
-	return 1;
-}
-
 int lua_HttpDecoder(lua_State *L){
 	lua_pushlightuserdata(L,new net::HttpDecoder(lua_tointeger(L,1)));
 	return 1;
@@ -209,7 +204,6 @@ bool Reg2Lua(lua_State *L){
 	REGISTER_FUNCTION("Send", &lua_SendWPacket);
 	REGISTER_FUNCTION("GetSysTick", &lua_GetSysTick);
 	REGISTER_FUNCTION("PacketDecoder", &lua_PacketDecoder);
-	REGISTER_FUNCTION("CmdPacketDecoder", &lua_CmdPacketDecoder);
 	REGISTER_FUNCTION("HttpDecoder", &lua_HttpDecoder);
 	lua_setglobal(L,"C");
 	return true;
