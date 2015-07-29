@@ -4,7 +4,8 @@ local http_response = {}
 
 function http_response:new()
   local o = {}
-  o.__index = http_response      
+  o.__index = http_response
+  o.headers = {}      
   setmetatable(o,o)
   return o
 end
@@ -46,6 +47,7 @@ function http_request:new(path)
   o.__index = http_request      
   setmetatable(o,o)
   o.path = path
+  o.headers = {} 
   return o
 end
 
@@ -130,13 +132,17 @@ function httpclient:request(method,request,on_result)
 			if success then
 				print("connect success") 
 				local connection = socket.New(s)
-				C.Bind(s,C.HttpDecoder(65535),function (_,rpk)
+				C.Bind(s,C.HttpDecoder(65535*2),function (_,rpk)
 					on_result(rpk)
+					on_result = nil
 					if connection then
 						connection:Close()
 					end
 				end,
 				function (_)
+					if on_result then
+						on_result(nil)
+					end
 					connection = nil
 				end)
 				request.method = method

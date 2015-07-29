@@ -2,6 +2,7 @@
 #define _HTTPPACKET_H
 
 #include "Packet.h"
+#include "LuaUtil.h"
 
 enum{
 	URL = 1,
@@ -15,45 +16,38 @@ namespace net{
 
 class HttpPacket : public Packet{
 private:
-	struct Val{
-		int    type;
-		size_t idx;
-		size_t size;
-		Val(){
-			type = 0;
-			idx  = 0;
-			size = 0;
-		}
-	};
 
 public:
-	HttpPacket():Packet(HTTPPACKET,new ByteBuffer(4096)),m_data(0),m_method(-1){
+	HttpPacket():Packet(HTTPPACKET,NULL),m_method(-1),m_bodysize(0){
 	}
 
 	~HttpPacket(){}
 
-	HttpPacket(const HttpPacket &o):Packet(HTTPPACKET,o.m_buffer){
-			m_header = o.m_header;
+	HttpPacket(const HttpPacket &o):Packet(HTTPPACKET,NULL){
+			m_header_field = o.m_header_field;
+			m_header_value = o.m_header_value;
 			m_status = o.m_status;
-			m_data   = o.m_data;
 			m_url    = o.m_url;
-			m_header = o.m_header;
-			m_body   = o.m_body;
+			m_bodysize = o.m_bodysize;
+			if(o.m_buffer){
+				m_buffer = o.m_buffer;
+				m_buffer->IncRef();
+			}
 			m_method = o.m_method;
 	}
 
 	HttpPacket& operator = (const HttpPacket &o){
 		if(&o != this){
-			if(m_buffer){
-				m_buffer->DecRef();
-				m_buffer = o.m_buffer->IncRef();
-				m_header = o.m_header;
-				m_status = o.m_status;
-				m_data   = o.m_data;
-				m_url    = o.m_url;
-				m_body   = o.m_body;
-				m_method = o.m_method;
-			}
+			m_header_field = o.m_header_field;
+			m_header_value = o.m_header_value;
+			m_status = o.m_status;
+			m_url    = o.m_url;
+			m_method = o.m_method;
+			m_bodysize = o.m_bodysize;			
+			if(o.m_buffer){
+				m_buffer = o.m_buffer;
+				m_buffer->IncRef();
+			}			
 		}	
 		return *this;
 	} 		
@@ -71,11 +65,11 @@ public:
 	}	
 
 	size_t PkLen(){
-		return (size_t)m_data;
+		return 0;
 	}
 
 	size_t PkTotal(){
-		return PkLen();
+		return 0;
 	}
 
 	void SetMethod(int method){
@@ -88,85 +82,63 @@ public:
 
 	void Append(int type,const char *str,size_t len){
 		if(type == URL){
-			m_url.idx = m_data;
-			m_buffer->WriteBin(m_data,(void*)str,len);
-			m_data += len;
-			m_buffer->WriteUint8(m_data,0);//write '\0';
-			m_data += 1;
-			m_url.size = len;
+			for(size_t i = 0;i < len;++i)
+				m_url.push_back(str[i]);
 		}else if(type == STATUS){
-			m_status.idx = m_data;
-			m_buffer->WriteBin(m_data,(void*)str,len);
-			m_data += len;
-			m_buffer->WriteUint8(m_data,0);//write '\0';
-			m_data += 1;
-			m_status.size = len;		
+			for(size_t i = 0;i < len;++i)
+				m_status.push_back(str[i]);		
 		}else if(type == BODY){
-			if(!m_body.idx)
-				m_body.idx = m_data;
-			m_buffer->WriteBin(m_data,(void*)str,len);
-			m_body.size += len;
-			m_data += len;
-			//printf("body %d\n",len);			
-		}else if(type == HEADER_FIELD || type == HEADER_VALUE){
-			Val tmp;
-			tmp.type = type;
-			tmp.idx = m_data;
-			m_buffer->WriteBin(m_data,(void*)str,len);
-			m_data += len;
-			m_buffer->WriteUint8(m_data,0);//write '\0';
-			m_data += 1;
-			m_header.push_back(tmp);			
-		}
+			if(!m_buffer) m_buffer = new ByteBuffer(1024);
+			m_buffer->WriteBin(m_bodysize,(void*)(str),len);
+			m_bodysize += len;						
+		}else if(type == HEADER_FIELD){
+			if(m_header_field.size() == m_header_value.size()){
+				m_header_field.push_back(std::string(""));
+			}
+			std::string *ptr = &m_header_field[m_header_field.size()-1];
+			for(size_t i = 0;i < len;++i)
+				ptr->push_back(str[i]);			
+		}else if(type == HEADER_VALUE){
+			if(m_header_field.size() != m_header_value.size()){
+				m_header_value.push_back(std::string(""));
+			}			
+			std::string *ptr = &m_header_value[m_header_value.size()-1];
+			for(size_t i = 0;i < len;++i)
+				ptr->push_back(str[i]);				
+		}			
 	}
 
 	const char *GetUrl(){
-		if(m_url.size)
-			return (const char*)&m_buffer->Buf()[m_url.idx];
-		return NULL;
+		return m_url.c_str();
 	}
 
 	const char *GetStatus(){
-		if(m_status.size)
-			return (const char*)&m_buffer->Buf()[m_status.idx];
-		else
-			return NULL;
+		return m_status.c_str();
 	}
 
 	const char *GetBody(size_t &len){
-		len = m_body.size;
-		return (const char*)&m_buffer->Buf()[m_body.idx];
+		if(!m_buffer) return NULL;
+		len = m_bodysize;
+		return &m_buffer->Buf()[0];
 	}
 
-	const char *GetHeader(const char *field){
-		size_t size = m_header.size();
-		for(size_t i = 0;i < size; i += 2){
-			if(strcmp((char*)&m_buffer->Buf()[m_header[i].idx],field) == 0 &&
-			   i + 1 < size)
-			{
-				return (const char*)&m_buffer->Buf()[m_header[i+1].idx];
-			}
+	void PushHeaders(lua_State *L){
+		lua_newtable(L);
+		size_t size = m_header_value.size();
+		for(size_t i = 0; i < size; ++i){
+			lua_pushstring(L, m_header_field[i].c_str());
+			lua_pushstring(L, m_header_value[i].c_str());
+			lua_rawset(L, -3);
 		}
-		return NULL;
-	}
-
-	std::vector<std::pair<const char*,const char*>> GetHeaders(){
-		std::vector<std::pair<const char*,const char*>> ret;
-		size_t size = m_header.size();
-		for(size_t i = 0;i < size; i += 2){
-			ret.push_back(std::make_pair((const char *)&m_buffer->Buf()[m_header[i].idx],
-				          (const char*)&m_buffer->Buf()[m_header[i+1].idx]));
-		}
-		return ret;
 	}
 	
 private:
-	std::vector<Val> m_header;
-	Val              m_url;
-	Val              m_status;
-	Val              m_body;
-	size_t           m_data;
-	int              m_method;
+	std::vector<std::string> m_header_field;
+	std::vector<std::string> m_header_value;	
+	std::string              m_url;
+	std::string              m_status;
+	int                      m_method;
+	size_t                   m_bodysize;
 };
 
 }

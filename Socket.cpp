@@ -123,8 +123,8 @@ void Socket::unpack(){
 		}else
 			break;
 	}while(size && state == establish);
-
-	memmove(unpackbuf,&unpackbuf[pos],size);
+	if(size)
+		memmove(unpackbuf,&unpackbuf[pos],size);
 	upos = size;
 }
 

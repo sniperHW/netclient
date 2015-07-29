@@ -21,7 +21,7 @@ struct luahttp_parser{
 };
 
 public:
-	HttpDecoder(int maxsize):m_packet(NULL),status(0),maxsize(maxsize > 65535 ? 65535 : maxsize){
+	HttpDecoder(int maxsize):m_packet(NULL),status(0),maxsize(maxsize > 65535 ? 65535 : maxsize),m_size(0){
 		m_parser.settings.on_message_begin = on_message_begin;
 		m_parser.settings.on_url = on_url;
 		m_parser.settings.on_status = on_status;
@@ -36,28 +36,23 @@ public:
 
 	virtual ~HttpDecoder(){ if(m_packet) delete m_packet;}
 
-	Packet *unpack(char *buf,size_t pos,size_t size,size_t max,size_t &pklen,int &err){
+	Packet *unpack(char *buf,size_t pos,size_t size,size_t _,size_t &pklen,int &err){
 		Packet *ret = NULL;
 		pklen       = 0;
-		err         = 0;
-		//buf[size] = 0;
-		//printf("----------------------------------------\n%s",buf);		
-		if(pos + size >= (size_t)maxsize)
-			pklen = -1;
-		else{
-			size_t nparsed = http_parser_execute((http_parser*)&m_parser,&m_parser.settings,&buf[pos],size);
-			pos  += size;		
-			if(nparsed != size){
-				err = -1;										
-			}else if(status == PACKET_COMPLETE){
-				pklen     = size;
-				buf[size] = 0;
-				printf("----------------------------------------\n%s",buf);
-				status    = 0;
-				pos       = 0;
-				ret       = m_packet;
-				m_packet  = NULL;
-			}
+		err         = 0;		
+		size_t nparsed = http_parser_execute((http_parser*)&m_parser,&m_parser.settings,&buf[pos],size);
+		if(nparsed > 0){
+			m_size += nparsed;
+			pklen = nparsed;
+		}
+		if(status == PACKET_COMPLETE){
+			status    = 0;
+			ret       = m_packet;
+			m_packet  = NULL;
+			http_parser_init((http_parser*)&m_parser,HTTP_BOTH);			
+		}else{
+			if(m_size >= maxsize) err = -1;
+			if(nparsed != size) err = -1;
 		}
 		return ret;
 	}
@@ -109,14 +104,15 @@ private:
 	static int on_message_complete(http_parser *_parser){	
 		HttpDecoder *decoder = ((luahttp_parser*)_parser)->decoder;
 		decoder->status = PACKET_COMPLETE;
-		return 0;							
+		return -1;							
 	}	
 
 private:
 	struct luahttp_parser m_parser;
 	HttpPacket           *m_packet;
 	int                   status;
-	int                   maxsize;                
+	size_t  			  m_size;
+	size_t                maxsize;                
 
 };
 
