@@ -111,8 +111,8 @@ private:
 	struct luahttp_parser m_parser;
 	HttpPacket           *m_packet;
 	int                   status;
-	size_t  			  m_size;
-	size_t                maxsize;                
+	size_t                maxsize;
+	size_t  			  m_size;	                
 
 };
 

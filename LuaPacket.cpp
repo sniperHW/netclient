@@ -2,8 +2,6 @@
 #include "assert.h"
 #include "RPacket.h"
 #include "WPacket.h"
-#include "CmdRPacket.h"
-#include "CmdWPacket.h"
 #include "HttpPacket.h"
 #include "RawBinPacket.h"
 
@@ -28,8 +26,6 @@ typedef struct{
 
 #define LUARPACKET_METATABLE    "luarpacket_metatable"
 #define LUAWPACKET_METATABLE    "luawpacket_metatable"
-#define LUACMDRPACKET_METATABLE "luacmdrpacket_metatable"
-#define LUACMDWPACKET_METATABLE "luacmdwpacket_metatable"
 #define LUAHTTPPACKET_METATABLE "luahttppacket_metatable"
 #define LUARAWPACKET_METATABLE  "luarawpacket_metatable"
 
@@ -536,60 +532,6 @@ static int NewRPacket(lua_State *L){
 	}
 }
 
-static int NewCmdWPacket(lua_State *L){
-	int argtype = lua_type(L,1); 
-	if(argtype == LUA_TNUMBER || argtype == LUA_TNIL || argtype == LUA_TNONE){
-		unsigned short cmd = 0;
-		if(argtype == LUA_TNUMBER)
-			cmd = (unsigned short)lua_tointeger(L,1);
-		lua_packet_t p = (lua_packet_t)lua_newuserdata(L, sizeof(*p));
-		luaL_getmetatable(L, LUACMDWPACKET_METATABLE);
-		lua_setmetatable(L, -2);
-		p->packet = new net::CmdWPacket(cmd);
-		return 1;
-	} else if(argtype ==  LUA_TUSERDATA) {
-		lua_packet_t o = lua_getluapacket(L,1);
-		if(!o || !o->packet || o->packet->Type() != CMDRPACKET) {
-			return luaL_error(L,"invaild opration for arg1");
-		}
-		lua_packet_t p = (lua_packet_t)lua_newuserdata(L, sizeof(*p));
-		luaL_getmetatable(L, LUACMDWPACKET_METATABLE);
-		lua_setmetatable(L, -2);
-		p->packet = new net::CmdWPacket(*dynamic_cast<net::CmdRPacket*>(o->packet));
-		return 1;
-	} else if(argtype == LUA_TTABLE) {
-		net::CmdWPacket* wpk = new net::CmdWPacket(0);
-		if(0 != luabin_pack_table(wpk,L,-1)){
-			delete wpk;
-			return luaL_error(L,"table should not hava metatable");	
-		}else{
-			lua_packet_t p = (lua_packet_t)lua_newuserdata(L, sizeof(*p));
-			luaL_getmetatable(L, LUACMDWPACKET_METATABLE);
-			lua_setmetatable(L, -2);
-			p->packet = wpk;
-		}
-		return 1;
-	} else {
-		return luaL_error(L,"invaild opration for arg1");
-	}
-}
-
-static int NewCmdRPacket(lua_State *L){
-	if (lua_type(L,1) == LUA_TUSERDATA) {
-		lua_packet_t o = lua_getluapacket(L,1);
-		if(!o || !o->packet || o->packet->Type() != CMDRPACKET) {
-			return luaL_error(L,"invaild opration for arg1");
-		}
-		lua_packet_t p = (lua_packet_t)lua_newuserdata(L, sizeof(*p));
-		luaL_getmetatable(L, LUACMDRPACKET_METATABLE);
-		lua_setmetatable(L, -2);
-		p->packet = new net::CmdRPacket(*dynamic_cast<net::CmdRPacket*>(o->packet));
-		return 1;
-	} else {
-		return luaL_error(L,"invaild opration for arg1");
-	}
-}
-
 static int NewRawPacket(lua_State *L){
 	int argtype = lua_type(L,1);
 	if(argtype == LUA_TSTRING){
@@ -644,8 +586,6 @@ void push_luaPacket(lua_State *L,net::Packet *rpk){
 	switch(rpk->Type()){
 		case WPACKET:luaL_getmetatable(L, LUAWPACKET_METATABLE);break;
 		case RPACKET:luaL_getmetatable(L, LUARPACKET_METATABLE);break;
-		case CMDWPACKET:luaL_getmetatable(L, LUACMDWPACKET_METATABLE);break;
-		case CMDRPACKET:luaL_getmetatable(L, LUACMDRPACKET_METATABLE);break;
 		case HTTPPACKET:luaL_getmetatable(L, LUAHTTPPACKET_METATABLE);break;
 		case RAWBINARY:luaL_getmetatable(L, LUARAWPACKET_METATABLE);break;
 		default:{
@@ -662,26 +602,6 @@ net::Packet *toLuaPacket(lua_State *L,int index){
 	lua_packet_t p = lua_getluapacket(L,index);
 	if(p) return p->packet;
 	return NULL;
-}
-
-static int WriteCmd(lua_State *L){
-	lua_packet_t p = lua_getluapacket(L,1);
-	if (!p || !p->packet)return luaL_error(L,"invaild opration");
-	net::CmdWPacket *wpk = dynamic_cast<net::CmdWPacket*>(p->packet);	
-	if(!wpk)return luaL_error(L,"invaild opration");
-	if(lua_type(L,2) != LUA_TNUMBER)
-		return luaL_error(L,"invaild arg2");
-	wpk->WriteCmd((unsigned short)lua_tointeger(L,2));
-	return 0;	
-}
-
-static int ReadCmd(lua_State *L){
-	lua_packet_t p = lua_getluapacket(L,1);
-	if (!p || !p->packet) return luaL_error(L,"invaild opration");
-	net::CmdRPacket *rpk = dynamic_cast<net::CmdRPacket*>(p->packet);
-	if(!rpk) return luaL_error(L,"invaild opration");
-	lua_pushinteger(L,rpk->ReadCmd());
-	return 1;	
 }
 
 //httppacket
@@ -799,36 +719,6 @@ void RegLuaPacket(lua_State *L) {
         {NULL, NULL}
     };
 
-    luaL_Reg cmdrpacket_methods[] = {
-        {"ReadU8",  ReadUint8},
-        {"ReadU16", ReadUint16},
-        {"ReadU32", ReadUint32},
-        {"ReadI8",  ReadInt8},
-        {"ReadI16", ReadInt16},
-        {"ReadI32", ReadInt32},        
-        {"ReadNum", ReadDouble},        
-        {"ReadStr", ReadString},
-        {"ReadTable", ReadTable},
-        {"ReadCmd",ReadCmd},
-        {NULL, NULL}
-    };
-
-    luaL_Reg cmdwpacket_methods[] = {                 
-        {"WriteU8", WriteUint8},
-        {"WriteU16",WriteUint16},
-        {"WriteU32",WriteUint32},
-        {"WriteNum",WriteDouble},        
-        {"WriteStr",WriteString},
-        {"WriteTable",WriteTable},
-        {"RewriteU8",RewriteUint8},
-        {"RewriteU16",RewriteUint16},
-        {"RewriteU32",RewriteUint32},
-        {"RewriteNum",RewriteDouble},
-        {"WriteCmd",WriteCmd},        
-        {"GetWritePos",GetWritePos},
-        {NULL, NULL}
-    };
-
     luaL_Reg httppacket_methods[] = {                 
         {"GetUrl", GetUrl},
         {"GetStatus",GetStatus},
@@ -860,20 +750,7 @@ void RegLuaPacket(lua_State *L) {
     lua_setfield(L, -2, "__index");
     lua_pop(L, 1);
 
-    luaL_newmetatable(L, LUACMDRPACKET_METATABLE);
-    luaL_setfuncs(L, packet_mt, 0);
-
-    luaL_newlib(L, cmdrpacket_methods);
-    lua_setfield(L, -2, "__index");
-    lua_pop(L, 1); 
-
-    luaL_newmetatable(L, LUACMDWPACKET_METATABLE);
-    luaL_setfuncs(L, packet_mt, 0);
-
-    luaL_newlib(L, cmdwpacket_methods);
-    lua_setfield(L, -2, "__index");
-    lua_pop(L, 1);                       
-
+                     
     luaL_newmetatable(L, LUAHTTPPACKET_METATABLE);
     luaL_setfuncs(L, packet_mt, 0);
 
@@ -883,8 +760,6 @@ void RegLuaPacket(lua_State *L) {
 
     SET_FUNCTION(L,"NewWPacket",NewWPacket);
     SET_FUNCTION(L,"NewRPacket",NewRPacket);
-    SET_FUNCTION(L,"NewCmdWPacket",NewCmdWPacket);
-    SET_FUNCTION(L,"NewCmdRPacket",NewCmdRPacket);
     SET_FUNCTION(L,"NewRawPacket",NewRawPacket);
 
 }

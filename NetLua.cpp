@@ -123,57 +123,6 @@ int lua_Socket_Release(lua_State *L){
 	return 0;
 }
 
-char* U2G(const char* utf8)
-{
-	int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
-	wchar_t* wstr = new wchar_t[len+1];
-	memset(wstr, 0, len+1);
-	MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wstr, len);
-	len = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
-	char* str = new char[len+1];
-	memset(str, 0, len+1);
-	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len, NULL, NULL);
-	if(wstr) delete[] wstr;
-	return str;
-}
-
-//GB2312到UTF-8的转换
-char* G2U(const char* gb2312)
-{
-	int len = MultiByteToWideChar(CP_ACP, 0, gb2312, -1, NULL, 0);
-	wchar_t* wstr = new wchar_t[len+1];
-	memset(wstr, 0, len+1);
-	MultiByteToWideChar(CP_ACP, 0, gb2312, -1, wstr, len);
-	len = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
-	char* str = new char[len+1];
-	memset(str, 0, len+1);
-	WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, len, NULL, NULL);
-	if(wstr) delete[] wstr;
-	return str;
-}
-
-int lua_U2G(lua_State *L){
-	const char *str = lua_tostring(L,1);
-	char *gstr      = U2G(str);
-	if(gstr){
-		lua_pushstring(L,gstr);
-		delete[] gstr;
-	}else
-		lua_pushnil(L); 
-	return 1;
-}
-
-int lua_G2U(lua_State *L){
-	const char *str = lua_tostring(L,1);
-	char *ustr      = G2U(str);
-	if(ustr){
-		lua_pushstring(L,ustr);
-		delete[] ustr;
-	}else
-		lua_pushnil(L); 
-	return 1;
-}
-
 #define REGISTER_CONST(L,N) do{\
 		lua_pushstring(L, #N);\
 		lua_pushinteger(L, N);\
@@ -191,9 +140,7 @@ bool Reg2Lua(lua_State *L){
 	if(!Init()) return false;
 
 	lua_newtable(L);
-	RegLuaPacket(L);
-	REGISTER_FUNCTION("Utf82Gbk", &lua_U2G);
-	REGISTER_FUNCTION("Gbk2Utf8", &lua_G2U);	
+	RegLuaPacket(L);	
 	REGISTER_FUNCTION("SocketRetain", &lua_Socket_Retain);
 	REGISTER_FUNCTION("SocketRelease", &lua_Socket_Release);
 	REGISTER_FUNCTION("Connect", &lua_Connect);

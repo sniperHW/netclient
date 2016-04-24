@@ -12,17 +12,6 @@ enum{
 
 namespace net{
 
-struct stPktHeader
-{
-	char			*m_pktFlag;
-	unsigned short  *m_pktSeq;
-	unsigned short  *m_pktDataSize;
-	unsigned short  *m_pktCmdId;
-	byte			*m_isStructType;
-	time_t			*m_timestamp;	
-};
-
-
 class Packet{
 public:
 	Packet(int type,ByteBuffer *buff):m_type(type),m_buffer(NULL){

@@ -24,7 +24,7 @@ public:
 		err         = 0;
 		if(size >= 4){
 			int len = *(int*)&buf[pos];
-			if(len <= 0 || len + sizeof(int) > (int)max)
+			if(len <= 0 || (int)(len + sizeof(int)) > (int)max)
 				err = -1;
 			else{
 				len += sizeof(int);
