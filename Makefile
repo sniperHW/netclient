@@ -13,7 +13,7 @@ ifeq ($(uname_S),FreeBSD)
 	DEFINE  += -D_BSD
 endif
 
-ifeq ($(uname_S),MINGW32_NT-6.1)
+ifeq ($(findstring MINGW32_NT,$(uname_S)),MINGW32_NT)
 	LDFLAGS += -lws2_32
 	DEFINE  += -D_WIN
 endif
