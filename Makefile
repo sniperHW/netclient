@@ -31,7 +31,7 @@ Reactor.cpp\
 RPacket.cpp\
 Socket.cpp
 
-all:$(source)
+all:$(source) $(HTTP_PARSER)
 	g++ $(SHARED) $(CFLAGS) -c $(source) $(DEFINE) $(INCLUDE)
 	g++ $(SHARED) $(CFLAGS) -o LuaNet *.o $(LDFLAGS) $(HTTP_PARSER) $(LIBRARY) 
 	rm *.o
