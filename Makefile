@@ -7,6 +7,7 @@ MAKE    =
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 ifeq ($(uname_S),Linux)
+	MAKE += make
 	LDFLAGS += -ldl -lpthread
 	DEFINE  += -D_LINUX
 endif
