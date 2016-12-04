@@ -7,6 +7,8 @@ struct dnode{
 	dnode *next;
 	dnode *pre;
 	dlist  *_dlist;
+	dnode(const dnode&);
+	dnode& operator = (const dnode&);	
 };
 
 class dlist{

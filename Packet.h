@@ -37,6 +37,9 @@ public:
 
 	ByteBuffer *Buffer() {return m_buffer;}
 
+	Packet(const Packet&);
+	Packet& operator = (const Packet&);
+
 protected:
 	int         m_type;
 	ByteBuffer *m_buffer;	
