@@ -49,7 +49,7 @@ void Reactor::LoopOnce(unsigned int ms){
 	timeout.tv_sec = ms/1000;
 	timeout.tv_usec = (ms%1000)*1000;
 	int n;
-#ifdef WIN32
+#ifdef _WIN
 	if((n= TEMP_FAILURE_RETRY(::select(0,&r_set,&w_set,&e_set, &timeout))) > 0)
 #else
 	int fd_setsize = (maxfd + 1) < FD_SETSIZE ? (maxfd + 1) : FD_SETSIZE;

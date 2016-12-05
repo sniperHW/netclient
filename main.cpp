@@ -1,5 +1,5 @@
 #include "LuaUtil.h"
-
+#include "chk_order.h"
 extern bool Reg2Lua(lua_State *L);
 
 int main(int argc,char **argv){

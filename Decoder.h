@@ -23,7 +23,7 @@ public:
 		pklen       = 0;
 		err         = 0;
 		if(size >= 4){
-			int len = *(int*)&buf[pos];
+			int len = (int)chk_ntoh32(*(int*)&buf[pos]);
 			if(len <= 0 || (int)(len + sizeof(int)) > (int)max)
 				err = -1;
 			else{

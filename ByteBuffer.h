@@ -5,6 +5,7 @@
 #include <vector>
 #include <string.h>
 #include <stdlib.h>
+#include "chk_order.h"
 
 #ifdef _WIN
 #include <Windows.h>
@@ -54,15 +55,16 @@ public:
 	}
 
 	void WriteUint16(size_t pos,unsigned short v){
-		write<unsigned short>(pos,v);
+
+		write<unsigned short>(pos,chk_hton16(v));
 	}
 
 	void WriteUint32(size_t pos,unsigned int v){
-		write<unsigned int>(pos,v);
+		write<unsigned int>(pos,chk_hton32(v));
 	}
 
 	void WriteUint64(size_t pos,unsigned long long v){
-		write<unsigned long long>(pos,v);
+		write<unsigned long long>(pos,chk_hton64(v));
 	}
 
 	void WriteDouble(size_t pos,double v){
@@ -93,11 +95,11 @@ public:
 	}
 
 	unsigned short ReadUint16(size_t pos) const{
-		return read<unsigned short>(pos);
+		return chk_ntoh16(read<unsigned short>(pos));
 	}
 
 	unsigned int ReadUint32(size_t pos) const{
-		return read<unsigned int>(pos);
+		return chk_ntoh32(read<unsigned int>(pos));
 	}
 
 	char ReadInt8(size_t pos) const{
@@ -105,15 +107,15 @@ public:
 	}
 
 	short ReadInt16(size_t pos) const{
-		return read<short>(pos);
+		return (short)chk_ntoh16((uint16_t)read<short>(pos));
 	}	
 
 	int ReadInt32(size_t pos) const{
-		return read<int>(pos);
+		return (int)chk_ntoh32((uint32_t)(read<int>(pos)));
 	}
 
 	unsigned long long ReadUint64(size_t pos) const{
-		return read<unsigned long long> (pos);
+		return (unsigned long long)chk_ntoh64((uint64_t)(read<unsigned long long>(pos)));
 	}
 
 	float ReadFloat(size_t pos) const{
