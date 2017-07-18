@@ -1,3 +1,4 @@
+local net=require("net")
 local socket = {}
 
 function socket:new(s)
@@ -5,26 +6,26 @@ function socket:new(s)
   o.__index = socket
   o.__gc    = function (self)
   		self:Close()
-  		C.SocketRelease(self.s)
+  		net.SocketRelease(self.s)
   end      
   setmetatable(o,o)
   o.s = s
-  C.SocketRetain(s)
+  net.SocketRetain(s)
   return o
 end
 
 function socket:Send(packet,on_finish)
 	if on_finish then
-		return C.Send(self.s,packet,function ()
+		return net.Send(self.s,packet,function ()
 			on_finish(self)
 		end)
 	else
-		return C.Send(self.s,packet)
+		return net.Send(self.s,packet)
 	end
 end
 
 function socket:Close()
-	C.Close(self.s)
+	net.Close(self.s)
 end
 
 

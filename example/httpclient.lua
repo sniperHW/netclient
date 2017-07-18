@@ -1,3 +1,4 @@
+local net=require("net")
 local Http = require("lua.http")
 
 local client = Http.HttpClient("sdk.test4.g.uc.cn")
@@ -24,6 +25,6 @@ end
 
 
 while true do
-	C.Run(50)
+	net.Run(50)
 	collectgarbage("collect")
 end

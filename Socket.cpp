@@ -27,6 +27,12 @@ bool  Socket::Listen(Reactor *reactor,const char *ip,int port,luaRef &cb)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = inet_addr(ip);
 	servaddr.sin_port = htons(port);
+
+
+	int yes = 1;
+
+	::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
 	if(::bind(fd,(const sockaddr *)&servaddr,sizeof(servaddr)) < 0)
 		return false;
 

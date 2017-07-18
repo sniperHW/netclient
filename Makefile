@@ -1,5 +1,5 @@
 CFLAGS   = -g -fno-strict-aliasing -Wall -std=c++0x
-LDFLAGS  = -llua 
+LDFLAGS  = 
 INCLUDE  = -I./ -I./deps -I./deps/lua-5.3.0/src
 LIBRARY  = -L./deps/lua-5.3.0/src
 HTTP_PARSER = ./deps/http-parser/libhttp_parser.a
@@ -10,21 +10,22 @@ ifeq ($(uname_S),Linux)
 	MAKE += make
 	LDFLAGS += -ldl -lpthread
 	DEFINE  += -D_LINUX
+	SHAREFLAGS = -shared
 endif
 
 ifeq ($(uname_S),Darwin)
 	MAKE += make
-	CC += clang
 	DEFINE += -D_MACH
+	SHAREFLAGS = -bundle -undefined dynamic_lookup	
 endif
 
 ifeq ($(findstring MINGW32_NT,$(uname_S)),MINGW32_NT)
 	LDFLAGS += -lws2_32
 	DEFINE  += -D_WIN
+	SHAREFLAGS = -shared
 endif
 
 source   =\
-main.cpp\
 SysTime.cpp\
 LuaPacket.cpp\
 NetLua.cpp\
@@ -33,8 +34,8 @@ RPacket.cpp\
 Socket.cpp
 
 all:$(source) $(HTTP_PARSER)
-	g++ $(SHARED) $(CFLAGS) -c $(source) $(DEFINE) $(INCLUDE)
-	g++ $(SHARED) $(CFLAGS) -o LuaNet *.o $(LDFLAGS) $(HTTP_PARSER) $(LIBRARY) 
+	$(CC) -fpic $(CFLAGS) -c $(source) $(INCLUDE) $(DEFINE)
+	$(CC) $(CFLAGS) $(SHAREFLAGS) -o net.so *.o  $(HTTP_PARSER) $(LDFLAGS) $(LIBRARY)
 	rm *.o
 
 $(HTTP_PARSER):

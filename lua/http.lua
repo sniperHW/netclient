@@ -1,3 +1,4 @@
+local net=require("net")
 local socket = require "lua.socket"
 
 local http_response = {}
@@ -36,7 +37,7 @@ end
 
 function http_response:End(body)
 	self.body = body
-	self.connection:Send(C.NewRawPacket(self:buildResponse()))
+	self.connection:Send(net.NewRawPacket(self:buildResponse()))
 end
 
 
@@ -75,9 +76,9 @@ function http_server:new()
 end
 
 function http_server:CreateServer(ip,port,on_request)
-	self.socket = C.Listen(ip,port,function (s)
+	self.socket = net.Listen(ip,port,function (s)
 		local connection = socket.New(s)
-		C.Bind(s,C.HttpDecoder(65535),function (_,rpk)
+		net.Bind(s,net.HttpDecoder(65535),function (_,rpk)
 			local response = http_response:new()
 			response.connection = connection
 			if on_request(rpk,response) then
@@ -128,11 +129,11 @@ end
 
 function httpclient:request(method,request,on_result)
 	print(self.host,self.port)
-	if C.Connect(self.host,self.port,function (s,success)
+	if net.Connect(self.host,self.port,function (s,success)
 			if success then
 				print("connect success") 
 				local connection = socket.New(s)
-				C.Bind(s,C.HttpDecoder(65535*2),function (_,rpk)
+				net.Bind(s,net.HttpDecoder(65535*2),function (_,rpk)
 					on_result(rpk)
 					on_result = nil
 					if connection then
@@ -146,7 +147,7 @@ function httpclient:request(method,request,on_result)
 					connection = nil
 				end)
 				request.method = method
-				connection:Send(C.NewRawPacket(self:buildRequest(request)))
+				connection:Send(net.NewRawPacket(self:buildRequest(request)))
 			else
 				on_result(nil)
 				print("connect failed")

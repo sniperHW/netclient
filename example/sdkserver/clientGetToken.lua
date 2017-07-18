@@ -1,5 +1,6 @@
 local Http  = require("lua.http")
 local cjson = require("cjson")
+local net = require("net")
 
 --test getToken
 
@@ -30,6 +31,6 @@ end
 
 
 while true do
-	C.Run(50)
+	net.Run(50)
 	collectgarbage("collect")
 end

@@ -136,6 +136,41 @@ int lua_Socket_Release(lua_State *L){
 	lua_settable(L, -3);\
 }while(0)	
 
+extern "C" {
+int32_t luaopen_net(lua_State *L)
+{
+	if(!Init()) return 0;
+	lua_newtable(L);
+	RegLuaPacket(L);
+	REGISTER_FUNCTION("SocketRetain", &lua_Socket_Retain);
+	REGISTER_FUNCTION("SocketRelease", &lua_Socket_Release);
+	REGISTER_FUNCTION("Connect", &lua_Connect);
+	REGISTER_FUNCTION("Listen", &lua_Listen);
+	REGISTER_FUNCTION("Close", &lua_Close);
+	REGISTER_FUNCTION("Run", &lua_Run);
+	REGISTER_FUNCTION("Bind", &lua_Bind);
+	REGISTER_FUNCTION("Send", &lua_SendWPacket);
+	REGISTER_FUNCTION("GetSysTick", &lua_GetSysTick);
+	REGISTER_FUNCTION("PacketDecoder", &lua_PacketDecoder);
+	REGISTER_FUNCTION("HttpDecoder", &lua_HttpDecoder);
+/*	REGISTER_MODULE(L,"timer",register_timer);
+	REGISTER_MODULE(L,"event_loop",register_event_loop);
+	REGISTER_MODULE(L,"socket",register_socket);
+	REGISTER_MODULE(L,"redis",register_redis);
+	REGISTER_MODULE(L,"buffer",register_buffer);
+	REGISTER_MODULE(L,"packet",register_packet);
+	REGISTER_MODULE(L,"http",register_http);		
+	REGISTER_MODULE(L,"signal",register_signum);
+	REGISTER_MODULE(L,"log",register_log);
+	REGISTER_MODULE(L,"ssl",register_ssl);
+	REGISTER_MODULE(L,"time",register_time);		
+*/
+	return 1;
+}
+}
+
+/*
+
 bool Reg2Lua(lua_State *L){
 
 	if(!Init()) return false;
@@ -155,4 +190,4 @@ bool Reg2Lua(lua_State *L){
 	REGISTER_FUNCTION("HttpDecoder", &lua_HttpDecoder);
 	lua_setglobal(L,"C");
 	return true;
-}
+}*/
