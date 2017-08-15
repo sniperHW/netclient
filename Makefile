@@ -35,7 +35,7 @@ Socket.cpp
 
 all:$(source) $(HTTP_PARSER)
 	$(CC) -fpic $(CFLAGS) -c $(source) $(INCLUDE) $(DEFINE)
-	$(CC) $(CFLAGS) $(SHAREFLAGS) -o net.so *.o  $(HTTP_PARSER) $(LDFLAGS) $(LIBRARY)
+	$(CC) $(CFLAGS) $(SHAREFLAGS) -o net.so *.o  $(HTTP_PARSER) $(LDFLAGS)
 	rm *.o
 
 $(HTTP_PARSER):

@@ -4,20 +4,21 @@
 #include "WPacket.h"
 #include "HttpPacket.h"
 #include "RawBinPacket.h"
+#include <math.h>
 
 enum{
 	L_TABLE = 1,
 	L_STRING,
 	L_BOOL,
 	L_FLOAT,
+	L_DOUBLE,
 	L_UINT8,
 	L_UINT16,
 	L_UINT32,
-	L_UINT64,
 	L_INT8,
 	L_INT16,
 	L_INT32,
-	L_INT64,
+	L_INT64,		
 };
 
 typedef struct{
@@ -39,11 +40,45 @@ static inline void luabin_pack_string(net::StreamWPacket* wpk,lua_State *L,int i
 	wpk->WriteBin((void*)data, len);
 }
 
+static void memrevifle(void *ptr, size_t len) {
+    unsigned char   *p = (unsigned char *)ptr,
+                    *e = (unsigned char *)p+len-1,
+                    aux;
+    int test = 1;
+    unsigned char *testp = (unsigned char*) &test;
+
+    if (testp[0] == 0) return; /* Big endian, nothing to do. */
+    len /= 2;
+    while(len--) {
+        aux = *p;
+        *p = *e;
+        *e = aux;
+        p++;
+        e--;
+    }
+}
+
+static void encode_double(net::StreamWPacket* wpk, double d) {
+    unsigned char b[8];
+    float f = d;
+     if (d == (double)f) {
+        memcpy(b,&f,4);
+        memrevifle(b,4);
+        wpk->WriteUint8(L_FLOAT);
+        wpk->WriteFloat(*((float*)b));
+    } else if (sizeof(d) == 8) {
+        memcpy(b,&d,8);
+        memrevifle(b,8);
+        wpk->WriteUint8(L_DOUBLE);
+        wpk->WriteDouble(*((double*)b));
+        memrevifle(b,8);   
+    }
+}
+
 static inline void luabin_pack_number(net::StreamWPacket* wpk,lua_State *L,int index){
 	lua_Number v = lua_tonumber(L,index);
 	if(v != (lua_Integer)v){
-		wpk->WriteUint8(L_FLOAT);
-		wpk->WriteDouble(v);
+		encode_double(wpk,v);
 	}else{
 		if((long long)v > 0){
 			unsigned long long _v = (unsigned long long)v;
@@ -57,7 +92,7 @@ static inline void luabin_pack_number(net::StreamWPacket* wpk,lua_State *L,int i
 				wpk->WriteUint8(L_UINT32);
 				wpk->WriteUint32((unsigned int)_v);
 			}else{
-				wpk->WriteUint8(L_UINT64);
+				wpk->WriteUint8(L_INT64);
 				wpk->WriteUint64((unsigned long long)_v);
 			}
 		}else{
@@ -146,10 +181,20 @@ static inline void un_pack_boolean(net::StreamRPacket *rpk,lua_State *L){
 }
 
 static inline void un_pack_number(net::StreamRPacket *rpk,lua_State *L,int type){
-	double n;// = rpk_read_double(rpk);
+	double n;
 	switch(type){
-		case L_FLOAT:{
-			n = rpk->ReadDouble();
+		case L_FLOAT:
+		case L_DOUBLE:
+		{
+			if(type == L_FLOAT) {
+				float f = rpk->ReadFloat();
+				memrevifle(&f,4);
+				n = (double)f;
+			} else {
+				double d = rpk->ReadDouble();
+				memrevifle(&d,8);
+				n = (double)d;				
+			}
 			break;
 		}
 		case L_UINT8:{
@@ -162,10 +207,6 @@ static inline void un_pack_number(net::StreamRPacket *rpk,lua_State *L,int type)
 		}
 		case L_UINT32:{
 			n = (double)rpk->ReadUint32();
-			break;
-		}
-		case L_UINT64:{
-			n = (double)rpk->ReadUint64();
 			break;
 		}
 		case L_INT8:{
